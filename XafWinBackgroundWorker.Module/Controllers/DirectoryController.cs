@@ -27,6 +27,7 @@ namespace XafWinBackgroundWorker.Module.Controllers
     public partial class DirectoryController : ViewController
     {
         SimpleAction ReadFiles;
+        BackgroundWorker bWorker;
         // Use CodeRush to create Controllers and Actions with a few keystrokes.
         // https://docs.devexpress.com/CodeRushForRoslyn/403133/
         public DirectoryController()
@@ -36,31 +37,48 @@ namespace XafWinBackgroundWorker.Module.Controllers
             this.TargetViewType = ViewType.DetailView;
             ReadFiles = new SimpleAction(this, "ReadFiles", "View");
             ReadFiles.Execute += ReadFiles_Execute;
+          
             
             // Target required Views (via the TargetXXX properties) and create their Actions.
         }
+
+       
+
         private void ReadFiles_Execute(object sender, SimpleActionExecuteEventArgs e)
         {
 
             var CurrentDirectory = this.View.CurrentObject as BusinessObjects.Directory;
 
-            BackgroundWorker BWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
-            BWorker.DoWork += backgroundWorker_DoWork;
-            BWorker.ProgressChanged += backgroundWorker_ProgressChanged;
-            BWorker.RunWorkerCompleted += BWorker_RunWorkerCompleted;
+            bWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
+            bWorker.DoWork += backgroundWorker_DoWork;
+            bWorker.ProgressChanged += backgroundWorker_ProgressChanged;
+            bWorker.RunWorkerCompleted += BWorker_RunWorkerCompleted;
             void BWorker_RunWorkerCompleted(object WC_sender, RunWorkerCompletedEventArgs WC_e)
             {
+                BackgroundWorker worker = WC_sender as BackgroundWorker;
+                if (worker.CancellationPending)
+                    return;
+
+                if (this.View == null)
+                    return;
+
                 this.View.ObjectSpace.CommitChanges();
             }
             void backgroundWorker_ProgressChanged(object RP_sender, ProgressChangedEventArgs RP_e)
             {
+
+
+                BackgroundWorker worker = RP_sender as BackgroundWorker;
+                if (worker.CancellationPending)
+                    return;
+
                 //HACK here we are back to the main thread so we can use the object space to create objects
-              
-               (string FileName, byte[] Data) WorkerArgs = ((string FileName, byte[] Data))RP_e.UserState;
+
+                (string FileName, byte[] Data) WorkerArgs = ((string FileName, byte[] Data))RP_e.UserState;
 
                 var File = this.View.ObjectSpace.CreateObject<DirectoryFile>();
-                File.File= this.View.ObjectSpace.CreateObject<FileData>();
-                File.File.LoadFromStream(WorkerArgs.FileName,new MemoryStream(WorkerArgs.Data));
+                File.File = this.View.ObjectSpace.CreateObject<FileData>();
+                File.File.LoadFromStream(WorkerArgs.FileName, new MemoryStream(WorkerArgs.Data));
                 CurrentDirectory.DirectoryFiles.Add(File);
                 CurrentDirectory.Progress++;
                 //resultLabel.Text = (e.ProgressPercentage.ToString() + "%");
@@ -71,7 +89,7 @@ namespace XafWinBackgroundWorker.Module.Controllers
                 (Faker Faker, int FilesToGenerate) WorkerArgs = ((Faker Faker, int FilesToGenerate))BW_e.Argument;
 
 
-               
+
 
                 for (int i = 1; i <= WorkerArgs.FilesToGenerate; i++)
                 {
@@ -84,8 +102,8 @@ namespace XafWinBackgroundWorker.Module.Controllers
                     {
                         //HACK We generate a filename and a random text as bytes to return to the main thread
                         var DataForMainThread = ($"{WorkerArgs.Faker.Name.FirstName()}_{WorkerArgs.Faker.Name.LastName()}.txt", Encoding.ASCII.GetBytes(WorkerArgs.Faker.Lorem.Sentence(50)));
-                        
-                        
+
+
                         //HACK if the process is too fast we can add delay to show the progress effect performing a time consuming operation and report progress.
                         System.Threading.Thread.Sleep(500);
 
@@ -94,32 +112,42 @@ namespace XafWinBackgroundWorker.Module.Controllers
                 }
             }
 
-            
+
             //Using bogus to generate random data
             var faker = new Faker("en");
 
             //Using tuples to pass arguments to the backgrown worker
             var WokerArgs = (faker, CurrentDirectory.FilesToGenerate);
 
-            BWorker.RunWorkerAsync(WokerArgs);
+            bWorker.RunWorkerAsync(WokerArgs);
         }
 
-     
+
 
         protected override void OnActivated()
         {
             base.OnActivated();
+            this.View.Closing += View_Closing;
             // Perform various tasks depending on the target View.
         }
+
+        private void View_Closing(object sender, EventArgs e)
+        {
+            if(bWorker!=null)
+                bWorker.CancelAsync();
+        }
+
         protected override void OnViewControlsCreated()
         {
             base.OnViewControlsCreated();
+         
             // Access and customize the target View control.
         }
         protected override void OnDeactivated()
         {
             // Unsubscribe from previously subscribed events and release other references and resources.
             base.OnDeactivated();
+            this.View.Closing -= View_Closing;
         }
     }
 }
