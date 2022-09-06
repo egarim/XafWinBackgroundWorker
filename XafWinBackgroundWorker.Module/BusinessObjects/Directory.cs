@@ -20,7 +20,7 @@ namespace XafWinBackgroundWorker.Module.BusinessObjects
     //[DefaultListViewOptions(MasterDetailMode.ListViewOnly, false, NewItemRowPosition.None)]
     //[Persistent("DatabaseTableName")]
     // Specify more UI options using a declarative approach (https://documentation.devexpress.com/#eXpressAppFramework/CustomDocument112701).
-    public class Directory : BaseObject
+    public class Directory : BaseObject, IReportProgress
     { // Inherit from a different class to provide a custom primary key, concurrency and deletion behavior, etc. (https://documentation.devexpress.com/eXpressAppFramework/CustomDocument113146.aspx).
         // Use CodeRush to create XPO classes and properties with a few keystrokes.
         // https://docs.devexpress.com/CodeRushForRoslyn/118557
@@ -35,6 +35,7 @@ namespace XafWinBackgroundWorker.Module.BusinessObjects
             // Place your initialization code here (https://documentation.devexpress.com/eXpressAppFramework/CustomDocument112834.aspx).
         }
 
+        int progress;
         int filesToGenerate;
         string name;
 
@@ -52,25 +53,21 @@ namespace XafWinBackgroundWorker.Module.BusinessObjects
                 return GetCollection<DirectoryFile>(nameof(DirectoryFiles));
             }
         }
-        
+
         public int FilesToGenerate
         {
             get => filesToGenerate;
             set => SetPropertyValue(nameof(FilesToGenerate), ref filesToGenerate, value);
         }
-        //private string _PersistentProperty;
-        //[XafDisplayName("My display name"), ToolTip("My hint message")]
-        //[ModelDefault("EditMask", "(000)-00"), Index(0), VisibleInListView(false)]
-        //[Persistent("DatabaseColumnName"), RuleRequiredField(DefaultContexts.Save)]
-        //public string PersistentProperty {
-        //    get { return _PersistentProperty; }
-        //    set { SetPropertyValue(nameof(PersistentProperty), ref _PersistentProperty, value); }
-        //}
+        [ModelDefault(nameof(IModelCommonMemberViewItem.PropertyEditorType), "XafWinBackgroundWorker.Module.Win.Editors.ProgressBarPropertyEditor")]
+        public int Progress
+        {
+            get => progress;
+            set => SetPropertyValue(nameof(Progress), ref progress, value);
+        }
 
-        //[Action(Caption = "My UI Action", ConfirmationMessage = "Are you sure?", ImageName = "Attention", AutoCommit = true)]
-        //public void ActionMethod() {
-        //    // Trigger a custom business logic for the current record in the UI (https://documentation.devexpress.com/eXpressAppFramework/CustomDocument112619.aspx).
-        //    this.PersistentProperty = "Paid";
-        //}
+        [Browsable(false)]
+        public int Max => this.FilesToGenerate;
+       
     }
 }
