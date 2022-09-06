@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Options xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Applications>
+		<!-- Win -->
+		<Application
+			Name="XafWinBackgroundWorkerWin"
+			FileName="[WinAppBin]\XafWinBackgroundWorker.Win.exe"
+			AdapterFileName="[WinAdapterFileName]"
+			CommunicationPort="4100"/>
+	</Applications>
+	<TestDatabases>
+		<Database xsi:type="TestMSSQLDatabase" Server="(localdb)\mssqllocaldb" DBName="XafWinBackgroundWorkerEasyTest"/>
+	</TestDatabases>
+
+	<Aliases>
+		<Alias Name="WinAdapterFileName" Value="[WinAppBin]\DevExpress.ExpressApp.EasyTest.WinAdapter.v21.2.dll" />
+		<Alias Name="WinAppBin" Value="[ConfigPath]\..\..\XafWinBackgroundWorker.Win\Bin\EasyTest\net5.0-windows" />
+	</Aliases>
+</Options>
