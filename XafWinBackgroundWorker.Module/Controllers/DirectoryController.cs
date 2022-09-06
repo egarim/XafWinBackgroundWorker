@@ -53,6 +53,8 @@ namespace XafWinBackgroundWorker.Module.Controllers
             bWorker.DoWork += backgroundWorker_DoWork;
             bWorker.ProgressChanged += backgroundWorker_ProgressChanged;
             bWorker.RunWorkerCompleted += BWorker_RunWorkerCompleted;
+
+
             void BWorker_RunWorkerCompleted(object WC_sender, RunWorkerCompletedEventArgs WC_e)
             {
                 BackgroundWorker worker = WC_sender as BackgroundWorker;
