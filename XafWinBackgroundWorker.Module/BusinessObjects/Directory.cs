@@ -31,7 +31,8 @@ namespace XafWinBackgroundWorker.Module.BusinessObjects
         public override void AfterConstruction()
         {
             base.AfterConstruction();
-            this.filesToGenerate = 1000;
+            this.filesToGenerate = 100;
+            this.name = "C:\\MyFakeDirectory";
             // Place your initialization code here (https://documentation.devexpress.com/eXpressAppFramework/CustomDocument112834.aspx).
         }
 

@@ -89,9 +89,18 @@ namespace XafWinBackgroundWorker.Module.Win.Editors
 
         public void Setup(IObjectSpace objectSpace, XafApplication application)
         {
-            currentObject = this.View.CurrentObject as IReportProgress;
-            currentObject.PropertyChanged += CurrentObject_PropertyChanged;
+          
         }
+        protected override void OnCurrentObjectChanged()
+        {
+            base.OnCurrentObjectChanged();
+            if (this.CurrentObject != null)
+            {
+                currentObject = this.View.CurrentObject as IReportProgress;
+                currentObject.PropertyChanged += CurrentObject_PropertyChanged;
+            }
+        }
+
 
         private void CurrentObject_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {

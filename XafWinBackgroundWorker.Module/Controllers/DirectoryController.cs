@@ -62,6 +62,7 @@ namespace XafWinBackgroundWorker.Module.Controllers
                 File.File= this.View.ObjectSpace.CreateObject<FileData>();
                 File.File.LoadFromStream(WorkerArgs.FileName,new MemoryStream(WorkerArgs.Data));
                 CurrentDirectory.DirectoryFiles.Add(File);
+                CurrentDirectory.Progress++;
                 //resultLabel.Text = (e.ProgressPercentage.ToString() + "%");
             }
             void backgroundWorker_DoWork(object BW_sender, DoWorkEventArgs BW_e)
