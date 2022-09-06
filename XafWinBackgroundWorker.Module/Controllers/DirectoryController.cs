@@ -10,11 +10,13 @@ using DevExpress.ExpressApp.SystemModule;
 using DevExpress.ExpressApp.Templates;
 using DevExpress.ExpressApp.Utils;
 using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl;
 using DevExpress.Persistent.Validation;
 using DevExpress.XtraReports.Templates;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using XafWinBackgroundWorker.Module.BusinessObjects;
@@ -30,7 +32,7 @@ namespace XafWinBackgroundWorker.Module.Controllers
         public DirectoryController()
         {
             InitializeComponent();
-            this.TargetObjectType = typeof(Directory);
+            this.TargetObjectType = typeof(BusinessObjects.Directory);
             this.TargetViewType = ViewType.DetailView;
             ReadFiles = new SimpleAction(this, "ReadFiles", "View");
             ReadFiles.Execute += ReadFiles_Execute;
@@ -40,18 +42,26 @@ namespace XafWinBackgroundWorker.Module.Controllers
         private void ReadFiles_Execute(object sender, SimpleActionExecuteEventArgs e)
         {
 
-            var CurrentDirectory = this.View.CurrentObject as Directory;
+            var CurrentDirectory = this.View.CurrentObject as BusinessObjects.Directory;
 
             BackgroundWorker BWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
             BWorker.DoWork += backgroundWorker_DoWork;
             BWorker.ProgressChanged += backgroundWorker_ProgressChanged;
+            BWorker.RunWorkerCompleted += BWorker_RunWorkerCompleted;
+            void BWorker_RunWorkerCompleted(object WC_sender, RunWorkerCompletedEventArgs WC_e)
+            {
+                this.View.ObjectSpace.CommitChanges();
+            }
             void backgroundWorker_ProgressChanged(object RP_sender, ProgressChangedEventArgs RP_e)
             {
                 //HACK here we are back to the main thread so we can use the object space to create objects
               
                (string FileName, byte[] Data) WorkerArgs = ((string FileName, byte[] Data))RP_e.UserState;
-                var test = WorkerArgs.Data;
 
+                var File = this.View.ObjectSpace.CreateObject<DirectoryFile>();
+                File.File= this.View.ObjectSpace.CreateObject<FileData>();
+                File.File.LoadFromStream(WorkerArgs.FileName,new MemoryStream(WorkerArgs.Data));
+                CurrentDirectory.DirectoryFiles.Add(File);
                 //resultLabel.Text = (e.ProgressPercentage.ToString() + "%");
             }
             void backgroundWorker_DoWork(object BW_sender, DoWorkEventArgs BW_e)
@@ -71,9 +81,11 @@ namespace XafWinBackgroundWorker.Module.Controllers
                     }
                     else
                     {
-                        //We generate a filename and a random text as bytes to return to the main thread
-                        var DataForMainThread = ($"{WorkerArgs.Faker.Name}.txt", Encoding.ASCII.GetBytes(WorkerArgs.Faker.Lorem.Sentence(50)));
-                        // Perform a time consuming operation and report progress.
+                        //HACK We generate a filename and a random text as bytes to return to the main thread
+                        var DataForMainThread = ($"{WorkerArgs.Faker.Name.FirstName()}_{WorkerArgs.Faker.Name.LastName()}.txt", Encoding.ASCII.GetBytes(WorkerArgs.Faker.Lorem.Sentence(50)));
+                        
+                        
+                        //HACK if the process is too fast we can add delay to show the progress effect performing a time consuming operation and report progress.
                         System.Threading.Thread.Sleep(500);
 
                         worker.ReportProgress(i, DataForMainThread);
@@ -90,6 +102,9 @@ namespace XafWinBackgroundWorker.Module.Controllers
 
             BWorker.RunWorkerAsync(WokerArgs);
         }
+
+     
+
         protected override void OnActivated()
         {
             base.OnActivated();
