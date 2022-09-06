@@ -31,9 +31,11 @@ namespace XafWinBackgroundWorker.Module.BusinessObjects
         public override void AfterConstruction()
         {
             base.AfterConstruction();
+            this.filesToGenerate = 1000;
             // Place your initialization code here (https://documentation.devexpress.com/eXpressAppFramework/CustomDocument112834.aspx).
         }
 
+        int filesToGenerate;
         string name;
 
         [Size(SizeAttribute.DefaultStringMappingFieldSize)]
@@ -49,6 +51,12 @@ namespace XafWinBackgroundWorker.Module.BusinessObjects
             {
                 return GetCollection<DirectoryFile>(nameof(DirectoryFiles));
             }
+        }
+        
+        public int FilesToGenerate
+        {
+            get => filesToGenerate;
+            set => SetPropertyValue(nameof(FilesToGenerate), ref filesToGenerate, value);
         }
         //private string _PersistentProperty;
         //[XafDisplayName("My display name"), ToolTip("My hint message")]
